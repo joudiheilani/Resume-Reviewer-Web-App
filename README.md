@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/joudiheilani/Resume-Reviewer-Web-App/actions/workflows/ci.yml/badge.svg)
 
-An AI-powered web app that reviews your resume against the job you're applying for. Upload or paste your resume, choose whether the job is an **internship** or **entry level**, paste the job description, and get:
+An AI-powered web app that reviews your resume against the job you're applying for. Upload or paste your resume, choose whether the job is an **internship** or **entry level**, paste the job description, optionally add your own context or instructions, and get:
 
 - a **match score** and summary of how well your resume fits the role,
 - **strengths (pros)** and **areas to improve (cons)** in relation to the job description,
@@ -44,6 +44,8 @@ The AI runs on a free model from [OpenRouter](https://openrouter.ai/collections/
 
 The persona is extended with guidance for the role type the user picks. For an **internship** it weighs coursework, projects, GPA and availability more than work history; for **entry level** it looks for internships, measurable impact and full-time readiness.
 
+**User-provided context (optional).** Users can add their own context or prompt patterns, such as a persona ("Act as a hiring manager at a startup"), background ("I'm a career changer"), focus, format or constraint. It's added to the recruiter pass, the editor pass (which also checks the final feedback follows it) and the chat. It can't override the honesty rules: the AI still never invents experience.
+
 The first pass also asks for a fixed Markdown structure (Overall Match, Strengths, Areas to Improve, Missing Keywords, Suggested Edits, Next Steps) so the UI can display each part clearly.
 
 **2. Iterative Refinement.** The first review is sent back to the model in a second request:
@@ -65,6 +67,7 @@ Both prompts live in [`reviewer.py`](reviewer.py).
 ## Features
 
 - **Internship or Entry level:** the user picks the role type before pasting the job description, and the feedback is tailored to it.
+- **Additional context (optional):** a box for anything else the AI should know or do, with one-tap example prompt patterns (Persona, Background, Focus, Format, Constraint, Tone).
 - **Upload or paste:** PDF, DOCX or TXT (up to 4 MB). Extracted text is shown so you can check and edit it before the review.
 - **Two-step progress:** the UI shows which pass is running (recruiter review, then editor check).
 - **Clear results:** colour-coded sections, a match-score ring, keyword table, and copy / download as Markdown.
@@ -150,11 +153,11 @@ OPENROUTER_MODEL=google/gemma-4-31b-it:free,nvidia/nemotron-3-ultra-550b-a55b:fr
 | Method | Path                 | Body                                                           | Returns |
 | ------ | -------------------- | -------------------------------------------------------------- | ------- |
 | POST   | `/api/extract`       | multipart `file` (PDF, DOCX, TXT)                              | `{text}` |
-| POST   | `/api/review/draft`  | `{resume, job_description, role_level}`                        | `{draft, model}`: Persona pass |
-| POST   | `/api/review/refine` | `{resume, job_description, role_level, draft}`                 | `{feedback, model}`: Iterative Refinement pass |
-| POST   | `/api/chat`          | `{resume, job_description, role_level, feedback, history, question}` | `{answer, model}` |
+| POST   | `/api/review/draft`  | `{resume, job_description, role_level, additional_context?}`   | `{draft, model}`: Persona pass |
+| POST   | `/api/review/refine` | `{resume, job_description, role_level, additional_context?, draft}` | `{feedback, model}`: Iterative Refinement pass |
+| POST   | `/api/chat`          | `{resume, job_description, role_level, additional_context?, feedback, history, question}` | `{answer, model}` |
 
-`role_level` is `"internship"` or `"entry_level"`. Errors return `{error}` with status 400 (bad input), 413 (file too large) or 503 (all AI models busy).
+`role_level` is `"internship"` or `"entry_level"`. `additional_context` is optional (up to 2,000 characters). Errors return `{error}` with status 400 (bad input), 413 (file too large) or 503 (all AI models busy).
 
 ## Deploying to Vercel (free)
 

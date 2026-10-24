@@ -95,6 +95,10 @@ h1, h2, h3 { line-height: 1.25; margin: 0; }
 .field:focus { outline: 2px solid var(--primary); outline-offset: -1px; background: var(--surface); }
 .field:disabled { cursor: not-allowed; opacity: .6; }
 .field-job { min-height: 190px; }
+.field-context { min-height: 110px; }
+.sub-label .optional { margin-left: 2px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); font-size: 11px; font-weight: 500; }
+.hint-text { margin: -4px 0 10px; }
+.pattern-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 
 .sub-label { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; font-size: 14px; font-weight: 600; }
 .sub-label .num { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); font-size: 12px; }

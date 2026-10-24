@@ -64,6 +64,20 @@ def test_chat_prompt_includes_context_and_history():
     assert messages[-1]["content"] == "What next?"
 
 
+def test_additional_context_is_optional_and_used_in_every_prompt():
+    plain = reviewer.build_review_messages(RESUME, JOB, "internship")
+    assert "Additional context" not in plain[1]["content"]
+
+    ctx = "Act as a hiring manager at a startup. Keep it to one page."
+    review = reviewer.build_review_messages(RESUME, JOB, "internship", ctx)
+    refine = reviewer.build_refine_messages(RESUME, JOB, "DRAFT", "internship", ctx)
+    chat = reviewer.build_chat_messages(RESUME, JOB, "FB", [], "Q?", "internship", ctx)
+    for content in (review[1]["content"], refine[1]["content"], chat[0]["content"]):
+        assert ctx in content
+        assert "never invent experience" in content
+    assert "follows the candidate's additional context" in refine[1]["content"]
+
+
 # ---------- model client ----------
 
 
@@ -137,6 +151,17 @@ def test_review_validates_input(client):
     res = client.post("/api/review/draft", json={**BODY, "resume": "short"})
     assert res.status_code == 400
     assert "resume" in res.json["error"].lower()
+
+
+def test_additional_context_reaches_both_passes(client, monkeypatch):
+    seen = []
+    monkeypatch.setattr(
+        reviewer, "call_model", lambda messages, **k: (seen.append(messages) or "OUT", "m:free")
+    )
+    body = {**BODY, "additional_context": "  Focus on projects.  "}
+    client.post("/api/review/draft", json=body)
+    client.post("/api/review/refine", json={**body, "draft": "OUT"})
+    assert all('"""\nFocus on projects.\n"""' in m[1]["content"] for m in seen)
 
 
 @pytest.mark.parametrize("role", [None, "", "senior", 5])

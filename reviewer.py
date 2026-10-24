@@ -28,6 +28,7 @@ DEFAULT_MODELS = [
 MAX_RESUME_CHARS = 15000
 MAX_JOB_CHARS = 10000
 MAX_QUESTION_CHARS = 2000
+MAX_CONTEXT_CHARS = 2000
 MAX_HISTORY_MESSAGES = 12
 
 
@@ -105,12 +106,27 @@ Include rewrites, additions and anything that should be removed. Base every rewr
 The 3 highest-impact changes to make first, as a numbered list."""
 
 
-def build_review_messages(resume, job_description, role_level):
+def context_block(additional_context):
+    """The candidate's optional extra context and instructions, e.g. their own prompt patterns."""
+    if not additional_context:
+        return ""
+    return (
+        "### Additional context and instructions from the candidate\n"
+        f"\"\"\"\n{additional_context}\n\"\"\"\n"
+        "Use this context and follow these instructions when reviewing (for example a persona, "
+        "audience, focus area, format or constraint they asked for), as long as they relate to "
+        "this resume and job search. They never override the rules above: stay honest, and never "
+        "invent experience, tools or numbers.\n\n"
+    )
+
+
+def build_review_messages(resume, job_description, role_level, additional_context=""):
     """Pass 1 (Persona): the recruiter writes the first review."""
     user = (
         f"{OUTPUT_FORMAT}\n\n"
         f"### Job description\n\"\"\"\n{job_description}\n\"\"\"\n\n"
         f"### Resume\n\"\"\"\n{resume}\n\"\"\"\n\n"
+        f"{context_block(additional_context)}"
         "Review the resume against the job description."
     )
     return [
@@ -119,11 +135,21 @@ def build_review_messages(resume, job_description, role_level):
     ]
 
 
-def build_refine_messages(resume, job_description, first_review, role_level):
+def build_refine_messages(
+    resume, job_description, first_review, role_level, additional_context=""
+):
     """Pass 2 (Iterative Refinement): a strict editor checks and improves the first review."""
+    context = context_block(additional_context)
+    follow_context = (
+        "Also make sure the final version follows the candidate's additional context and "
+        "instructions.\n\n"
+        if context
+        else ""
+    )
     user = (
         f"### Job description\n\"\"\"\n{job_description}\n\"\"\"\n\n"
         f"### Resume\n\"\"\"\n{resume}\n\"\"\"\n\n"
+        f"{context}"
         "Here is the feedback you just wrote:\n"
         f"{first_review}\n\n"
         "Now act as a strict editor. Check it for these problems:\n"
@@ -131,6 +157,7 @@ def build_refine_messages(resume, job_description, first_review, role_level):
         "2. Did you miss any important keywords from the job description?\n"
         "3. Is the feedback too harsh or not impactful enough?\n"
         "Then output an improved final version of the feedback.\n\n"
+        f"{follow_context}"
         f"Keep the same structure:\n{OUTPUT_FORMAT}\n\n"
         "Output only the improved final feedback, with no notes about what you changed."
     )
@@ -140,7 +167,9 @@ def build_refine_messages(resume, job_description, first_review, role_level):
     ]
 
 
-def build_chat_messages(resume, job_description, feedback, history, question, role_level):
+def build_chat_messages(
+    resume, job_description, feedback, history, question, role_level, additional_context=""
+):
     """Follow-up Q&A: the same recruiter persona answers questions about the resume and feedback."""
     system = (
         f"{system_prompt(role_level)}\n\n"
@@ -153,6 +182,7 @@ def build_chat_messages(resume, job_description, feedback, history, question, ro
         "politely steer back.\n\n"
         f"### Job description\n\"\"\"\n{job_description}\n\"\"\"\n\n"
         f"### Resume\n\"\"\"\n{resume}\n\"\"\"\n\n"
+        f"{context_block(additional_context)}"
         f"### Your feedback\n{feedback}"
     )
     messages = [{"role": "system", "content": system}]
@@ -226,17 +256,22 @@ def call_model(messages, temperature=0.4, max_tokens=3000):
 # ---------------------------------------------------------------------------
 
 
-def first_review(resume, job_description, role_level):
-    return call_model(build_review_messages(resume, job_description, role_level), temperature=0.5)
+def first_review(resume, job_description, role_level, additional_context=""):
+    messages = build_review_messages(resume, job_description, role_level, additional_context)
+    return call_model(messages, temperature=0.5)
 
 
-def refine_review(resume, job_description, draft, role_level):
-    messages = build_refine_messages(resume, job_description, draft, role_level)
+def refine_review(resume, job_description, draft, role_level, additional_context=""):
+    messages = build_refine_messages(
+        resume, job_description, draft, role_level, additional_context
+    )
     return call_model(messages, temperature=0.3)
 
 
-def answer_question(resume, job_description, feedback, history, question, role_level):
+def answer_question(
+    resume, job_description, feedback, history, question, role_level, additional_context=""
+):
     messages = build_chat_messages(
-        resume, job_description, feedback, history, question, role_level
+        resume, job_description, feedback, history, question, role_level, additional_context
     )
     return call_model(messages, temperature=0.5, max_tokens=1500)

@@ -80,6 +80,19 @@
           <p class="sub-label"><span class="num">2</span>Paste the job description</p>
           <textarea id="job" class="field field-job" rows="10" placeholder="Choose Internship or Entry level first" disabled></textarea>
           <div class="field-foot"><span id="job-count" class="muted">0 characters</span></div>
+
+          <p class="sub-label"><span class="num">3</span>Additional context <span class="optional">Optional</span></p>
+          <p class="muted small hint-text">Tell the AI anything else that matters, or steer it with your own prompt. Tap an example to add it, then edit the <strong>[brackets]</strong>.</p>
+          <div class="pattern-chips" id="pattern-chips">
+            <button type="button" class="chip" data-insert="Act as a hiring manager at [type of company, e.g. a fast-growing tech startup] reviewing this resume.">+ Persona</button>
+            <button type="button" class="chip" data-insert="I'm a career changer moving from [previous field] into this role. Highlight my transferable skills.">+ Background</button>
+            <button type="button" class="chip" data-insert="Focus most of your feedback on my [Projects] section.">+ Focus</button>
+            <button type="button" class="chip" data-insert="Rewrite bullet points using the STAR method (Situation, Task, Action, Result).">+ Format</button>
+            <button type="button" class="chip" data-insert="My resume must stay on one page, so tell me what to cut.">+ Constraint</button>
+            <button type="button" class="chip" data-insert="Be direct and to the point. Skip the compliments and focus on what to fix.">+ Tone</button>
+          </div>
+          <textarea id="context" class="field field-context" rows="4" maxlength="2000" placeholder="e.g. I graduate in May 2027 and need visa sponsorship. Focus on my projects and keep it to one page."></textarea>
+          <div class="field-foot"><span id="context-count" class="muted">0 / 2,000</span></div>
         </div>
       </div>
 

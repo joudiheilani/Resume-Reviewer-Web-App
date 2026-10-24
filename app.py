@@ -55,7 +55,9 @@ def _inputs(body):
     job = _text_field(body, "job_description", "The job description", reviewer.MAX_JOB_CHARS, 30)
     role = body.get("role_level")
     reviewer.role_guidance(role)  # raises ValueError for anything but internship / entry_level
-    return resume, job, role
+    context = body.get("additional_context")
+    context = context.strip()[: reviewer.MAX_CONTEXT_CHARS] if isinstance(context, str) else ""
+    return resume, job, role, context
 
 
 @app.errorhandler(ValueError)
@@ -90,8 +92,8 @@ def extract():
 @app.post("/api/review/draft")
 def review_draft():
     """Step 1: Persona pattern. The recruiter writes the first review."""
-    resume, job, role = _inputs(request.get_json(silent=True) or {})
-    draft, model = reviewer.first_review(resume, job, role)
+    resume, job, role, context = _inputs(request.get_json(silent=True) or {})
+    draft, model = reviewer.first_review(resume, job, role, context)
     return jsonify(draft=draft, model=model)
 
 
@@ -99,9 +101,9 @@ def review_draft():
 def review_refine():
     """Step 2: Iterative Refinement pattern. A strict editor improves the first review."""
     body = request.get_json(silent=True) or {}
-    resume, job, role = _inputs(body)
+    resume, job, role, context = _inputs(body)
     draft = _text_field(body, "draft", "The first review", 20000)
-    feedback, model = reviewer.refine_review(resume, job, draft, role)
+    feedback, model = reviewer.refine_review(resume, job, draft, role, context)
     return jsonify(feedback=feedback, model=model)
 
 
@@ -109,11 +111,13 @@ def review_refine():
 def chat():
     """Follow-up questions about the resume and feedback."""
     body = request.get_json(silent=True) or {}
-    resume, job, role = _inputs(body)
+    resume, job, role, context = _inputs(body)
     feedback = _text_field(body, "feedback", "The feedback", 20000)
     question = _text_field(body, "question", "A question", reviewer.MAX_QUESTION_CHARS)
     history = body.get("history") if isinstance(body.get("history"), list) else []
-    answer, model = reviewer.answer_question(resume, job, feedback, history, question, role)
+    answer, model = reviewer.answer_question(
+        resume, job, feedback, history, question, role, context
+    )
     return jsonify(answer=answer, model=model)
 
 
