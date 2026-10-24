@@ -1,29 +1,29 @@
 :root {
   color-scheme: light;
-  /* Palette: base #EBEBEB, periwinkle #7685F9, teal #55D6C2, yellow #F8EF8C */
-  --bg: #ebebeb;
-  --surface: #ffffff;
-  --surface-2: #f4f4f4;
-  --border: #dadada;
+  /* Palette: butter cream base, periwinkle #7685F9, teal #55D6C2, peach #FFB38A */
+  --bg: #fff3d1;               /* butter cream */
+  --surface: #fffdf6;
+  --surface-2: #fff8e6;
+  --border: #f0e2bb;
   --text: #1f2230;
-  --muted: #5c6070;
+  --muted: #5f5a52;
   --primary: #7685f9;          /* fills, borders, focus rings */
   --primary-hover: #6474f5;
   --primary-ink: #4c5bd4;      /* periwinkle text on light surfaces (readable) */
   --primary-soft: #e6e9fe;
-  --on-primary: #15172b;       /* text on periwinkle / teal / yellow fills */
+  --on-primary: #15172b;       /* text on periwinkle / teal / peach fills */
   --accent: #55d6c2;           /* teal */
   --good: #157a6b;             /* teal text */
   --good-soft: #dcf5f0;
-  --highlight: #f8ef8c;        /* yellow */
-  --highlight-strong: #e3d54a;
-  --warn: #6f6100;             /* yellow-family text */
-  --warn-soft: #fcf8d4;
+  --highlight: #ffb38a;        /* peach */
+  --highlight-strong: #ff9a66;
+  --warn: #9a3f12;             /* peach-family text */
+  --warn-soft: #ffeadd;
   --info: #4c5bd4;
   --info-soft: #e6e9fe;
   --bad: #b91c1c;
   --bad-soft: #fdecec;
-  --shadow: 0 1px 2px rgba(31, 34, 48, .05), 0 4px 16px rgba(31, 34, 48, .07);
+  --shadow: 0 1px 2px rgba(120, 90, 30, .06), 0 4px 16px rgba(120, 90, 30, .08);
   --radius: 14px;
 }
 
@@ -249,7 +249,7 @@ h1, h2, h3 { line-height: 1.25; margin: 0; }
 .mascot-btn[aria-expanded="true"] .robot-arm-right { animation-duration: .8s; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes blink { 0%, 44%, 50%, 100% { transform: scaleY(1); } 47% { transform: scaleY(.1); } }
-@keyframes glow { 0%, 100% { fill: #f8ef8c; } 50% { fill: #fffbd6; } }
+@keyframes glow { 0%, 100% { fill: #ffb38a; } 50% { fill: #ffd9c4; } }
 @keyframes wave { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(-150deg); } 80% { transform: rotate(-120deg); } 90% { transform: rotate(-150deg); } }
 @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
 
