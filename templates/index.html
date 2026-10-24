@@ -20,13 +20,13 @@
         </span>
         <span>Resu<span class="brand-accent">Mate</span></span>
       </a>
-      <span class="model-badge" title="Free model from OpenRouter, with automatic fallback">AI: <code id="model-name">{{ model }}</code></span>
+      <span class="model-badge" title="Free model from OpenRouter, with automatic fallback"><span class="live-dot" aria-hidden="true"></span>AI: <code id="model-name">{{ model }}</code></span>
     </div>
   </header>
 
   <main class="wrap">
     <section class="hero">
-      <h1>Tailor your resume to the job you want</h1>
+      <h1>Tailor your resume to <span class="hl">the job you want</span></h1>
       <p>Add your resume and the job description. An AI recruiter reviews it, a strict AI editor double-checks the advice, and you can ask follow-up questions.</p>
       <ol class="steps" aria-label="Progress">
         <li class="step is-active" data-step="1"><span>1</span>Add resume &amp; job</li>
@@ -50,7 +50,7 @@
 
           <label id="dropzone" class="dropzone" for="file-input">
             <input id="file-input" type="file" accept=".pdf,.docx,.txt,.md" hidden>
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+            <svg class="upload-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
             <strong>Drop your resume here or click to browse</strong>
             <span class="muted">PDF, DOCX or TXT, up to 4 MB</span>
           </label>
@@ -171,7 +171,7 @@
 
         <aside class="card chat" aria-labelledby="chat-title">
           <div class="chat-head">
-            <h2 id="chat-title">Ask the recruiter</h2>
+            <h2 id="chat-title"><span class="live-dot" aria-hidden="true"></span>Ask the recruiter</h2>
             <p class="muted small">Questions about your resume or this feedback</p>
           </div>
           <div id="chat-log" class="chat-log" aria-live="polite">
