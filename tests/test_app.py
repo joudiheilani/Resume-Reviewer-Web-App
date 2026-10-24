@@ -13,6 +13,7 @@ import reviewer  # noqa: E402
 
 RESUME = "Jane Doe\nB.S. Computer Science\nBuilt a Python web app used by 200 students.\n" * 2
 JOB = "Software Engineering Intern. Requirements: Python, SQL, Git, REST APIs."
+BODY = {"resume": RESUME, "job_description": JOB, "role_level": "internship"}
 
 
 @pytest.fixture
@@ -34,14 +35,15 @@ class FakeResponse:
 
 
 def test_review_prompt_uses_persona():
-    messages = reviewer.build_review_messages(RESUME, JOB)
+    messages = reviewer.build_review_messages(RESUME, JOB, "internship")
     assert messages[0]["role"] == "system"
     assert messages[0]["content"].startswith("Act as an experienced recruiter for entry-level")
+    assert "INTERNSHIP" in messages[0]["content"]
     assert RESUME in messages[1]["content"] and JOB in messages[1]["content"]
 
 
 def test_refine_prompt_contains_first_review_and_checklist():
-    messages = reviewer.build_refine_messages(RESUME, JOB, "FIRST REVIEW TEXT")
+    messages = reviewer.build_refine_messages(RESUME, JOB, "FIRST REVIEW TEXT", "entry_level")
     prompt = messages[1]["content"]
     assert "Here is the feedback you just wrote:\nFIRST REVIEW TEXT" in prompt
     assert "Now act as a strict editor" in prompt
@@ -49,11 +51,14 @@ def test_refine_prompt_contains_first_review_and_checklist():
     assert "2. Did you miss any important keywords from the job description?" in prompt
     assert "3. Is the feedback too harsh or not impactful enough?" in prompt
     assert "output an improved final version of the feedback" in prompt
+    assert "ENTRY-LEVEL" in messages[0]["content"]
 
 
 def test_chat_prompt_includes_context_and_history():
     history = [{"role": "user", "content": "hi"}, {"role": "system", "content": "ignored"}]
-    messages = reviewer.build_chat_messages(RESUME, JOB, "FEEDBACK", history, "What next?")
+    messages = reviewer.build_chat_messages(
+        RESUME, JOB, "FEEDBACK", history, "What next?", "internship"
+    )
     assert "FEEDBACK" in messages[0]["content"]
     assert [m["role"] for m in messages] == ["system", "user", "user"]
     assert messages[-1]["content"] == "What next?"
@@ -118,20 +123,27 @@ def test_review_flow(client, monkeypatch):
         return ("DRAFT" if len(calls) == 1 else "FINAL"), "model:free"
 
     monkeypatch.setattr(reviewer, "call_model", fake_call)
-    draft = client.post("/api/review/draft", json={"resume": RESUME, "job_description": JOB})
+    draft = client.post("/api/review/draft", json=BODY)
     assert draft.status_code == 200 and draft.json["draft"] == "DRAFT"
 
     final = client.post(
-        "/api/review/refine", json={"resume": RESUME, "job_description": JOB, "draft": "DRAFT"}
+        "/api/review/refine", json={**BODY, "draft": "DRAFT"}
     )
     assert final.status_code == 200 and final.json["feedback"] == "FINAL"
     assert "Here is the feedback you just wrote:\nDRAFT" in calls[1][1]["content"]
 
 
 def test_review_validates_input(client):
-    res = client.post("/api/review/draft", json={"resume": "short", "job_description": JOB})
+    res = client.post("/api/review/draft", json={**BODY, "resume": "short"})
     assert res.status_code == 400
     assert "resume" in res.json["error"].lower()
+
+
+@pytest.mark.parametrize("role", [None, "", "senior", 5])
+def test_review_requires_role_level(client, role):
+    res = client.post("/api/review/draft", json={**BODY, "role_level": role})
+    assert res.status_code == 400
+    assert "internship or entry level" in res.json["error"]
 
 
 def test_ai_error_returns_503(client, monkeypatch):
@@ -139,7 +151,7 @@ def test_ai_error_returns_503(client, monkeypatch):
         raise reviewer.AIError("busy")
 
     monkeypatch.setattr(reviewer, "call_model", boom)
-    res = client.post("/api/review/draft", json={"resume": RESUME, "job_description": JOB})
+    res = client.post("/api/review/draft", json=BODY)
     assert res.status_code == 503 and res.json["error"] == "busy"
 
 
@@ -148,8 +160,7 @@ def test_chat(client, monkeypatch):
     res = client.post(
         "/api/chat",
         json={
-            "resume": RESUME,
-            "job_description": JOB,
+            **BODY,
             "feedback": "Some feedback",
             "history": [],
             "question": "How do I add SQL?",

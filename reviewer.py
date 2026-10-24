@@ -53,6 +53,33 @@ PERSONA = (
     "the resume to that job description."
 )
 
+ROLE_GUIDANCE = {
+    "internship": (
+        "The candidate is applying for an INTERNSHIP. Judge them as a current student: relevant "
+        "coursework, academic and personal projects, GPA (if 3.0 or higher), clubs, hackathons, "
+        "leadership and their graduation date or availability matter more than years of work "
+        "experience. Don't penalize a short work history; show how to make projects and part-time "
+        "jobs demonstrate the skills in the job description."
+    ),
+    "entry_level": (
+        "The candidate is applying for an ENTRY-LEVEL full-time role. Look for internships, "
+        "projects with real impact, measurable results and readiness for full-time work. "
+        "Experience and projects should lead the resume; education should be concise, and "
+        "coursework lists usually only help if experience is thin."
+    ),
+}
+
+
+def role_guidance(role_level):
+    if role_level not in ROLE_GUIDANCE:
+        raise ValueError("Choose whether the role is an internship or entry level.")
+    return ROLE_GUIDANCE[role_level]
+
+
+def system_prompt(role_level):
+    return f"{PERSONA}\n\n{role_guidance(role_level)}"
+
+
 OUTPUT_FORMAT = """Format the feedback in Markdown using exactly these sections, in this order:
 
 ## Overall Match
@@ -78,7 +105,7 @@ Include rewrites, additions and anything that should be removed. Base every rewr
 The 3 highest-impact changes to make first, as a numbered list."""
 
 
-def build_review_messages(resume, job_description):
+def build_review_messages(resume, job_description, role_level):
     """Pass 1 (Persona): the recruiter writes the first review."""
     user = (
         f"{OUTPUT_FORMAT}\n\n"
@@ -86,10 +113,13 @@ def build_review_messages(resume, job_description):
         f"### Resume\n\"\"\"\n{resume}\n\"\"\"\n\n"
         "Review the resume against the job description."
     )
-    return [{"role": "system", "content": PERSONA}, {"role": "user", "content": user}]
+    return [
+        {"role": "system", "content": system_prompt(role_level)},
+        {"role": "user", "content": user},
+    ]
 
 
-def build_refine_messages(resume, job_description, first_review):
+def build_refine_messages(resume, job_description, first_review, role_level):
     """Pass 2 (Iterative Refinement): a strict editor checks and improves the first review."""
     user = (
         f"### Job description\n\"\"\"\n{job_description}\n\"\"\"\n\n"
@@ -104,13 +134,16 @@ def build_refine_messages(resume, job_description, first_review):
         f"Keep the same structure:\n{OUTPUT_FORMAT}\n\n"
         "Output only the improved final feedback, with no notes about what you changed."
     )
-    return [{"role": "system", "content": PERSONA}, {"role": "user", "content": user}]
+    return [
+        {"role": "system", "content": system_prompt(role_level)},
+        {"role": "user", "content": user},
+    ]
 
 
-def build_chat_messages(resume, job_description, feedback, history, question):
+def build_chat_messages(resume, job_description, feedback, history, question, role_level):
     """Follow-up Q&A: the same recruiter persona answers questions about the resume and feedback."""
     system = (
-        f"{PERSONA}\n\n"
+        f"{system_prompt(role_level)}\n\n"
         "You already reviewed this candidate's resume. Answer their follow-up questions about the "
         "resume, the job description and your feedback. Be concise, specific and encouraging. When "
         "you suggest wording, give the exact text they can paste into their resume. Base it on what "
@@ -193,14 +226,17 @@ def call_model(messages, temperature=0.4, max_tokens=3000):
 # ---------------------------------------------------------------------------
 
 
-def first_review(resume, job_description):
-    return call_model(build_review_messages(resume, job_description), temperature=0.5)
+def first_review(resume, job_description, role_level):
+    return call_model(build_review_messages(resume, job_description, role_level), temperature=0.5)
 
 
-def refine_review(resume, job_description, draft):
-    return call_model(build_refine_messages(resume, job_description, draft), temperature=0.3)
+def refine_review(resume, job_description, draft, role_level):
+    messages = build_refine_messages(resume, job_description, draft, role_level)
+    return call_model(messages, temperature=0.3)
 
 
-def answer_question(resume, job_description, feedback, history, question):
-    messages = build_chat_messages(resume, job_description, feedback, history, question)
+def answer_question(resume, job_description, feedback, history, question, role_level):
+    messages = build_chat_messages(
+        resume, job_description, feedback, history, question, role_level
+    )
     return call_model(messages, temperature=0.5, max_tokens=1500)

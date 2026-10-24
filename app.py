@@ -7,8 +7,9 @@ from flask import Flask, jsonify, render_template, request
 
 import reviewer
 
-app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB uploads
+# Static files live in public/ so Vercel can serve them from its CDN; Flask serves them locally.
+app = Flask(__name__, static_folder="public/static", static_url_path="/static")
+app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024  # 4 MB; Vercel caps request bodies at 4.5 MB
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md"}
 
@@ -52,7 +53,9 @@ def _text_field(body, name, label, max_chars, min_chars=1):
 def _inputs(body):
     resume = _text_field(body, "resume", "Your resume", reviewer.MAX_RESUME_CHARS, min_chars=50)
     job = _text_field(body, "job_description", "The job description", reviewer.MAX_JOB_CHARS, 30)
-    return resume, job
+    role = body.get("role_level")
+    reviewer.role_guidance(role)  # raises ValueError for anything but internship / entry_level
+    return resume, job, role
 
 
 @app.errorhandler(ValueError)
@@ -67,7 +70,7 @@ def ai_unavailable(exc):
 
 @app.errorhandler(413)
 def too_large(_exc):
-    return jsonify(error="That file is too large. The limit is 5 MB."), 413
+    return jsonify(error="That file is too large. The limit is 4 MB."), 413
 
 
 @app.get("/")
@@ -87,8 +90,8 @@ def extract():
 @app.post("/api/review/draft")
 def review_draft():
     """Step 1: Persona pattern. The recruiter writes the first review."""
-    resume, job = _inputs(request.get_json(silent=True) or {})
-    draft, model = reviewer.first_review(resume, job)
+    resume, job, role = _inputs(request.get_json(silent=True) or {})
+    draft, model = reviewer.first_review(resume, job, role)
     return jsonify(draft=draft, model=model)
 
 
@@ -96,9 +99,9 @@ def review_draft():
 def review_refine():
     """Step 2: Iterative Refinement pattern. A strict editor improves the first review."""
     body = request.get_json(silent=True) or {}
-    resume, job = _inputs(body)
+    resume, job, role = _inputs(body)
     draft = _text_field(body, "draft", "The first review", 20000)
-    feedback, model = reviewer.refine_review(resume, job, draft)
+    feedback, model = reviewer.refine_review(resume, job, draft, role)
     return jsonify(feedback=feedback, model=model)
 
 
@@ -106,11 +109,11 @@ def review_refine():
 def chat():
     """Follow-up questions about the resume and feedback."""
     body = request.get_json(silent=True) or {}
-    resume, job = _inputs(body)
+    resume, job, role = _inputs(body)
     feedback = _text_field(body, "feedback", "The feedback", 20000)
     question = _text_field(body, "question", "A question", reviewer.MAX_QUESTION_CHARS)
     history = body.get("history") if isinstance(body.get("history"), list) else []
-    answer, model = reviewer.answer_question(resume, job, feedback, history, question)
+    answer, model = reviewer.answer_question(resume, job, feedback, history, question, role)
     return jsonify(answer=answer, model=model)
 
 
