@@ -211,7 +211,10 @@ def call_model(messages, temperature=0.4, max_tokens=3000):
     """Send messages to OpenRouter, falling back through the free models. Returns (text, model)."""
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        raise AIError("OPENROUTER_API_KEY is not set. Add it to the .env file.")
+        raise AIError(
+            "OPENROUTER_API_KEY is not set. Add it to the .env file, or to the Environment "
+            "Variables in your Vercel project settings and redeploy."
+        )
 
     headers = {
         "Authorization": f"Bearer {api_key}",
