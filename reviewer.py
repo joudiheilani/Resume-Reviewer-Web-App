@@ -220,7 +220,7 @@ def call_model(messages, temperature=0.4, max_tokens=3000):
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "HTTP-Referer": "http://localhost:5000",
-        "X-Title": "Resume Reviewer",
+        "X-Title": "ResuMate",
     }
     errors = []
     for model in get_models():

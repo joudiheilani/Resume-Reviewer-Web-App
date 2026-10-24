@@ -411,7 +411,7 @@
     const blob = new Blob([currentText()], { type: "text/markdown" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = state.view === "final" ? "resume-feedback.md" : "resume-feedback-draft.md";
+    a.download = state.view === "final" ? "resumate-feedback.md" : "resumate-feedback-draft.md";
     a.click();
     URL.revokeObjectURL(a.href);
   });

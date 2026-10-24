@@ -126,7 +126,7 @@ def test_clean_output_strips_fences():
 
 
 def test_index(client):
-    assert b"Resume Reviewer" in client.get("/").data
+    assert b"ResuMate" in client.get("/").data
 
 
 def test_review_flow(client, monkeypatch):

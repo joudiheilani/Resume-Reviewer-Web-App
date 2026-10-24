@@ -1,4 +1,4 @@
-"""Flask web server for the AI Resume Reviewer."""
+"""Flask web server for ResuMate, the AI resume reviewer."""
 
 import io
 import os

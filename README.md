@@ -1,8 +1,12 @@
-# Resume Reviewer
+# ResuMate
+
+*Your AI resume buddy: tailor your resume to the job you want.*
 
 ![CI](https://github.com/joudiheilani/Resume-Reviewer-Web-App/actions/workflows/ci.yml/badge.svg)
 
-An AI-powered web app that reviews your resume against the job you're applying for. Upload or paste your resume, choose whether the job is an **internship** or **entry level**, paste the job description, optionally add your own context or instructions, and get:
+**Live app:** https://resume-reviewer-web-app.vercel.app
+
+ResuMate is an AI-powered web app that reviews your resume against the job you're applying for. Upload or paste your resume, choose whether the job is an **internship** or **entry level**, paste the job description, optionally add your own context or instructions, and get:
 
 - a **match score** and summary of how well your resume fits the role,
 - **strengths (pros)** and **areas to improve (cons)** in relation to the job description,
